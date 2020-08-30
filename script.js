@@ -1,0 +1,290 @@
+let key_dict = {
+  'Q':{
+    osc : new Tone.OmniOscillator("A3", "triangle").toDestination()
+  },
+  'W': {
+    osc : new Tone.OmniOscillator("B3", "triangle").toDestination()
+  },
+  'E':{
+    osc : new Tone.OmniOscillator("C4", "triangle").toDestination()
+  },
+  'R':{
+    osc : new Tone.OmniOscillator("D4", "triangle").toDestination()
+  },
+  'T':{
+    osc : new Tone.OmniOscillator("E4", "triangle").toDestination()
+  },
+  'Y':{
+    osc : new Tone.OmniOscillator("F4", "triangle").toDestination()
+  },
+  'U': {
+    osc : new Tone.OmniOscillator("G4", "triangle").toDestination()
+  }, 
+  'I': {
+    osc : new Tone.OmniOscillator("A4", "triangle").toDestination()
+  },
+  'O':{
+    osc : new Tone.OmniOscillator("B4", "triangle").toDestination()
+  },
+  'P':{
+    osc : new Tone.OmniOscillator("C5", "triangle").toDestination()
+  },
+  'A':{
+    osc : new Tone.OmniOscillator("D5", "triangle").toDestination()
+  },
+  'S':{
+    osc : new Tone.OmniOscillator("E5", "triangle").toDestination()
+  },
+  'D': {
+    osc : new Tone.OmniOscillator("F5", "triangle").toDestination()
+  }, 
+  'F': {
+    osc : new Tone.OmniOscillator("G5", "triangle").toDestination()
+  },
+  'G':{
+    osc : new Tone.OmniOscillator("A5", "triangle").toDestination()
+  },
+  'H':{
+    osc : new Tone.OmniOscillator("B5", "triangle").toDestination()
+  },
+  'J':{
+    osc : new Tone.OmniOscillator("C6", "triangle").toDestination()
+  },
+  'K':{
+    osc : new Tone.OmniOscillator("D6", "triangle").toDestination()
+  },
+  'L': {
+    osc : new Tone.OmniOscillator("E6", "triangle").toDestination()
+  }, 
+  'Z': {
+    osc : new Tone.OmniOscillator("F6", "triangle").toDestination()
+  },
+  'X':{
+    osc : new Tone.OmniOscillator("G6", "triangle").toDestination()
+  },
+  'C':{
+    osc : new Tone.OmniOscillator("A6", "triangle").toDestination()
+  },
+  'V':{
+    osc : new Tone.OmniOscillator("B6", "triangle").toDestination()
+  },
+  'B':{
+    osc : new Tone.OmniOscillator("C7", "triangle").toDestination()
+  },
+  'N': {
+    osc : new Tone.OmniOscillator("D7", "triangle").toDestination()
+  }, 
+  'M': {
+    osc : new Tone.OmniOscillator("E7", "triangle").toDestination()
+  }
+}
+let audio_started = false;
+
+
+
+const canvas = document.querySelector('#canvas');
+let width = canvas.offsetWidth;
+let height = canvas.offsetHeight;
+const renderer = new THREE.WebGLRenderer({canvas: canvas});
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xfaf0e6);
+
+const setup = () => {
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMapSoft = true;
+
+  const aspectRatio = width / height;
+  const fieldOfView = 100;
+  const nearPlane = 0.1;
+  const farPlane = 10000;
+  camera = new THREE.PerspectiveCamera(
+    fieldOfView,
+    aspectRatio,
+    nearPlane,
+    farPlane
+  );
+  camera.position.x = 0;
+  camera.position.y = 0;
+  camera.position.z = 300;
+}
+setup();
+
+
+/*     LIGHTING     */
+let hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x8E8E8E, .5)
+
+let shadowLight = new THREE.DirectionalLight(0xffffff, .4);
+shadowLight.position.set(0, 450, 350);
+shadowLight.castShadow = true;
+
+shadowLight.shadow.camera.left = -650;
+shadowLight.shadow.camera.right = 650;
+shadowLight.shadow.camera.top = 650;
+shadowLight.shadow.camera.bottom = -650;
+shadowLight.shadow.camera.near = 1;
+shadowLight.shadow.camera.far = 1000;
+
+shadowLight.shadow.mapSize.width = 4096;
+shadowLight.shadow.mapSize.height = 4096;
+
+scene.add(hemisphereLight);  
+scene.add(shadowLight);
+
+
+
+/*     CREATE BUBBLES     */
+const vertex = width > 575 ? 80 : 40;
+
+
+const geoms = [new THREE.SphereGeometry(100, vertex, vertex),
+                new THREE.SphereGeometry(100, vertex, vertex),
+                new THREE.SphereGeometry(100, vertex, vertex)];
+
+
+for(let bubbleGeometry of geoms){
+  for(let i = 0; i < bubbleGeometry.vertices.length; i++) {
+    let vector = bubbleGeometry.vertices[i];
+    vector.original = vector.clone();  
+  }
+}
+
+const materials = [new THREE.MeshStandardMaterial({ color: 0x49C100 }),
+                    new THREE.MeshStandardMaterial({ color: 0x4BE0D9 }),
+                    new THREE.MeshStandardMaterial({ color: 0xC927FD })]
+
+let bubbles = [new THREE.Mesh(geoms[0], materials[0]), 
+                new THREE.Mesh(geoms[1], materials[1]),
+                new THREE.Mesh(geoms[2], materials[2])];
+
+for(let i = 0; i < bubbles.length; i++){
+  let bubble = bubbles[i];
+  bubble.position.x = -300 + i*300;
+  bubble.castShadow = true;
+  bubble.receiveShadow = false;
+  scene.add(bubble);
+}
+
+
+/*     PLANE FOR SHADOW     */
+const createPlane = () => {
+  const planeGeometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
+  const planeMaterial = new THREE.ShadowMaterial({
+    opacity: 0.15
+  });
+  const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+  plane.position.y = -150;
+  plane.position.x = 0;
+  plane.position.z = 0;
+  plane.rotation.x = Math.PI / 180 * -90;
+  plane.receiveShadow = true;
+  scene.add(plane);
+}
+createPlane();
+
+
+
+/*     MOVEMENT     */
+let dist = 0
+
+let movements = [{accel: 0, dist: 0}, {accel: 0, dist: 0}, {accel: 0, dist: 0}];
+
+const updateVertices = (time) => {
+  for(let k = 0; k < geoms.length; k++){
+
+    let bubbleGeometry = geoms[k];
+
+    for(let i = 0; i < bubbleGeometry.vertices.length; i++) {
+      let vector = bubbleGeometry.vertices[i];
+      vector.copy(vector.original);
+      let perlin = noise.simplex3(
+        (vector.x * 0.006) + (time * 0.0005 *(k+1)/1000) + k,
+        (vector.y * 0.006) + (time * 0.0005 *(k+1)) + k,
+        (vector.z * 0.006) + k
+      );
+      let ratio = ((perlin * 0.3 * (movements[k].dist + 0.1)) + 0.8);
+      vector.multiplyScalar(ratio);
+    }
+    bubbleGeometry.verticesNeedUpdate = true;
+  }
+}
+
+function round(num, places) {
+    var multiplier = Math.pow(10, places);
+    return Math.round(num * multiplier) / multiplier;
+}
+
+
+/*     ANIMATIONS     */
+var accel = 0;
+var friction = 0.6;
+var min = 0;
+var rot_factor = 15;
+
+
+window.addEventListener('keydown', e => {
+	let keyClass = classifyKey(String.fromCharCode(e.keyCode));
+  if(keyClass != undefined)
+    movements[keyClass].accel += 0.8
+  //for(let m of movements) m.accel += 0.4;
+});
+
+
+window.addEventListener('keydown', e => {
+  if(!audio_started){
+    Tone.start();
+    audio_started = true;
+  }
+  var chr = String.fromCharCode(e.keyCode);
+  if(key_dict[chr] != undefined)
+    key_dict[chr].osc.start();
+});
+
+window.addEventListener('keyup', e => {
+  var chr = String.fromCharCode(e.keyCode)
+  if(key_dict[chr] != undefined)
+    key_dict[chr].osc.stop();
+});
+
+
+
+function classifyKey(ch){
+  let left = ['Q','W','E','A','S','D','Z','X','C'];
+  let center = ['R','T','Y','U','F','G','H','V','B'];
+  let right = ['I','O','P','J','K','L','N','M'];
+  if(left.includes(ch)) return 0;
+  if(center.includes(ch)) return 1;
+  if(right.includes(ch)) return 2;
+  return undefined
+}
+
+
+const render = (time) => {
+  requestAnimationFrame(render);
+  for(let bubble of bubbles){
+    bubble.rotation.y += -Math.random() / rot_factor
+    bubble.rotation.z += Math.random() / rot_factor
+  }
+
+  updateVertices(time)
+
+  for(let m of movements){
+    if (m.dist > 0.1) m.accel -= 0.05;
+    if (m.dist < -0.1) m.accel += 0.05;
+
+    m.accel *= friction;
+    if (Math.abs(m.accel) < 0.001) m.accel = 0.01;
+
+    m.dist += m.accel;
+
+    m.dist = Math.max(-1, Math.min(2,m.dist));
+  }
+  renderer.clear();
+  renderer.render(scene, camera);
+}
+
+
+
+requestAnimationFrame(render);
+renderer.render(scene, camera);
