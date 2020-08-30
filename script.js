@@ -8,15 +8,21 @@ player.autostart = false;
 let key_dict = {
   'Q':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("A3", "triangle").toDestination()
+    filename: 'drums/clap1.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("A3", "triangle").toDestination()
   },
   'W': {
     keyClass: 0,
-    osc : new Tone.OmniOscillator("B3", "triangle").toDestination()
+    filename: 'drums/clap2.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("B3", "triangle").toDestination()
   },
   'E':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("C4", "triangle").toDestination()
+    filename: 'drums/perc1.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("C4", "triangle").toDestination()
   },
   'R':{
     keyClass: 1,
@@ -48,15 +54,21 @@ let key_dict = {
   },
   'A':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("D5", "triangle").toDestination()
+    filename: 'drums/hihat1.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("D5", "triangle").toDestination()
   },
   'S':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("E5", "triangle").toDestination()
+    filename: 'drums/hihat2.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("E5", "triangle").toDestination()
   },
   'D': {
     keyClass: 0,
-    osc : new Tone.OmniOscillator("F5", "triangle").toDestination()
+    filename: 'drums/kick1.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("F5", "triangle").toDestination()
   }, 
   'F': {
     keyClass: 1,
@@ -84,15 +96,21 @@ let key_dict = {
   }, 
   'Z': {
     keyClass: 0,
-    osc : new Tone.OmniOscillator("F6", "triangle").toDestination()
+    filename: 'drums/snare1.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("F6", "triangle").toDestination()
   },
   'X':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("G6", "triangle").toDestination()
+    filename: 'drums/snare2.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("G6", "triangle").toDestination()
   },
   'C':{
     keyClass: 0,
-    osc : new Tone.OmniOscillator("A6", "triangle").toDestination()
+    filename: 'drums/snare3.wav',
+    player: undefined
+    //osc : new Tone.OmniOscillator("A6", "triangle").toDestination()
   },
   'V':{
     keyClass: 1,
@@ -270,12 +288,23 @@ window.addEventListener('keydown', e => {
     audio_started = true;
   }
   var chr = String.fromCharCode(e.keyCode);
-  if(key_dict[chr] != undefined)
+  if(key_dict[chr] == undefined) return;
+  if(key_dict[chr].keyClass == 0){
+    if(key_dict[chr].player == undefined){
+      key_dict[chr].player = new Tone.Player(key_dict[chr].filename).toDestination();
+      key_dict[chr].player.loop = true;
+      key_dict[chr].player.autostart = true;
+    }else key_dict[chr].player.start();
+  }else
     key_dict[chr].osc.start();
 });
 window.addEventListener('keyup', e => {
   var chr = String.fromCharCode(e.keyCode)
-  if(key_dict[chr] != undefined)
+  if(key_dict[chr] == undefined) return;
+  if(key_dict[chr].keyClass == 0){
+    if(key_dict[chr].player != undefined)
+      key_dict[chr].player.stop();
+  }else
     key_dict[chr].osc.stop();
 });
 
