@@ -1,80 +1,113 @@
+/*
+
+let player = new Tone.Player(filename).toDestination();
+player.loop = true;
+player.autostart = false;
+
+*/
 let key_dict = {
   'Q':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("A3", "triangle").toDestination()
   },
   'W': {
+    keyClass: 0,
     osc : new Tone.OmniOscillator("B3", "triangle").toDestination()
   },
   'E':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("C4", "triangle").toDestination()
   },
   'R':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("D4", "triangle").toDestination()
   },
   'T':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("E4", "triangle").toDestination()
   },
   'Y':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("F4", "triangle").toDestination()
   },
   'U': {
+    keyClass: 1,
     osc : new Tone.OmniOscillator("G4", "triangle").toDestination()
   }, 
   'I': {
+    keyClass: 2,
     osc : new Tone.OmniOscillator("A4", "triangle").toDestination()
   },
   'O':{
+    keyClass: 2,
     osc : new Tone.OmniOscillator("B4", "triangle").toDestination()
   },
   'P':{
+    keyClass: 2,
     osc : new Tone.OmniOscillator("C5", "triangle").toDestination()
   },
   'A':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("D5", "triangle").toDestination()
   },
   'S':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("E5", "triangle").toDestination()
   },
   'D': {
+    keyClass: 0,
     osc : new Tone.OmniOscillator("F5", "triangle").toDestination()
   }, 
   'F': {
+    keyClass: 1,
     osc : new Tone.OmniOscillator("G5", "triangle").toDestination()
   },
   'G':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("A5", "triangle").toDestination()
   },
   'H':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("B5", "triangle").toDestination()
   },
   'J':{
+    keyClass: 2,
     osc : new Tone.OmniOscillator("C6", "triangle").toDestination()
   },
   'K':{
+    keyClass: 2,
     osc : new Tone.OmniOscillator("D6", "triangle").toDestination()
   },
   'L': {
+    keyClass: 2,
     osc : new Tone.OmniOscillator("E6", "triangle").toDestination()
   }, 
   'Z': {
+    keyClass: 0,
     osc : new Tone.OmniOscillator("F6", "triangle").toDestination()
   },
   'X':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("G6", "triangle").toDestination()
   },
   'C':{
+    keyClass: 0,
     osc : new Tone.OmniOscillator("A6", "triangle").toDestination()
   },
   'V':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("B6", "triangle").toDestination()
   },
   'B':{
+    keyClass: 1,
     osc : new Tone.OmniOscillator("C7", "triangle").toDestination()
   },
   'N': {
+    keyClass: 2,
     osc : new Tone.OmniOscillator("D7", "triangle").toDestination()
   }, 
   'M': {
+    keyClass: 2,
     osc : new Tone.OmniOscillator("E7", "triangle").toDestination()
   }
 }
@@ -224,13 +257,13 @@ var rot_factor = 15;
 
 
 window.addEventListener('keydown', e => {
-	let keyClass = classifyKey(String.fromCharCode(e.keyCode));
-  if(keyClass != undefined)
-    movements[keyClass].accel += 0.8
-  //for(let m of movements) m.accel += 0.4;
+	try{
+    var idx = key_dict[String.fromCharCode(e.keyCode)].keyClass;
+    movements[idx].accel += 0.8
+  } catch(e){return;}
 });
 
-
+/// AUDIO ///
 window.addEventListener('keydown', e => {
   if(!audio_started){
     Tone.start();
@@ -240,24 +273,11 @@ window.addEventListener('keydown', e => {
   if(key_dict[chr] != undefined)
     key_dict[chr].osc.start();
 });
-
 window.addEventListener('keyup', e => {
   var chr = String.fromCharCode(e.keyCode)
   if(key_dict[chr] != undefined)
     key_dict[chr].osc.stop();
 });
-
-
-
-function classifyKey(ch){
-  let left = ['Q','W','E','A','S','D','Z','X','C'];
-  let center = ['R','T','Y','U','F','G','H','V','B'];
-  let right = ['I','O','P','J','K','L','N','M'];
-  if(left.includes(ch)) return 0;
-  if(center.includes(ch)) return 1;
-  if(right.includes(ch)) return 2;
-  return undefined
-}
 
 
 const render = (time) => {
