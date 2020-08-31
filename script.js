@@ -369,23 +369,31 @@ window.addEventListener('keydown', e => {
   }
 });
 
+function getNote(chr){
+		let midiNotes = [];
+		
+		for (i in key_dict[chr].midiNote.note) midiNotes.push(i);
+		let midiNote = Tone.Frequency(key_dict[chr].midiNote.note[0]).toMidi();
+		let tempo = 120; // quarter/second
+		let quantizedTempo = tempo*4; // 16ths / second
+
+		let sTime = Math.round(((keys[e.keyCode] - startTime) * 1000) * quantizedTempo);
+		let eTime = Math.round(((keys[e.keyCode] - Date.now()) * 1000) * quantizedTempo);
+		midi.push({
+			pitch: chr,
+			quantizedStartStep: sTime,
+			quantizedEndStep: eTime		
+		})
+}
+
 window.addEventListener('keyup', e => {
 	var chr = String.fromCharCode(e.keyCode);
-	let sTime = (keys[e.keyCode] - startTime) * 1000;
-	let eTime = (keys[e.keyCode] - Date.now()) * 1000;
-	midi.push({
-		startTime: sTime,
-		endTime: eTime,
-		length: eTime - sTime,
-		note: chr
-	})
-
 	delete keys[e.keyCode];
-  
   if(key_dict[chr] == undefined) return;
   if(key_dict[chr].keyCode == 0) return;
-  if(loaded[chr])
+  if(loaded[chr]){
     key_dict[chr].player.stop();
+	}
 });
 
 
@@ -431,10 +439,36 @@ function map(v,l1,h1,l2,h2){
   return ratio*r2 + l2;
 }
 
+
+
+////// MAGENTA //////
+
+let melodyRnn = new music_rnn.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+let melodyRnnLoaded = melodyRnn.initialize();
+
+window.addEventListener('click', async e => {
+  await melodyRnnLoaded;
+  let seed = {
+    notes: [
+      {pitch: Tone.Frequency('C4').toMidi(), quantizedStartStep: 0, quantizedEndStep: 4},
+      {pitch: 'D4', quantizedStartStep: 4, quantizedEndStep: 8}
+    ],
+    totalQuantizedSteps: 8,
+    quantizationInfo: { stepsPerQuarter: 4 }
+  };
+  let steps = 32;
+  let temperature = 0.8;
+
+  let result = await melodyRnn.continueSequence(seed, steps, temperature);
+})
+
+
+
+//////// PARTICLES /////////
 class ParticleSystem{
   constructor(origin, size, color){
     let p = [];
-    let n = 32
+    let n = 24
     for(let i = 0; i < n; i++)
       p.push(new Particle(origin, size, 2*i*Math.PI/n, color));
     this.particles = p;
@@ -448,15 +482,15 @@ class ParticleSystem{
   }
   isDead(){
     for(let p of this.particles)
-      if(p.isDead()) return true;
+      if(p.isDead()){return true;}
     return false;
   }
 }
 class Particle{
   constructor(origin, size, angle, c){
-    let partGeom = new THREE.SphereGeometry(size);
-    let partMaterial = new THREE.MeshLambertMaterial({ color: c });
-    this.particle = new THREE.Mesh(partGeom, partMaterial);
+    this.partGeom = new THREE.SphereGeometry(size);
+    this.partMaterial = new THREE.MeshLambertMaterial({ color: c });
+    this.particle = new THREE.Mesh(this.partGeom, this.partMaterial);
     this.particle.position.x = origin.x;
     this.particle.position.y = origin.y;
     this.particle.position.z = origin.z;
@@ -471,13 +505,18 @@ class Particle{
     this.particle.position.y += this.velocity.y + 5*(Math.random() -0.5);
     this.particle.position.z += this.velocity.z;
 
-    //this.velocity.x = Math.max(0, this.velocity.x + this.accel.x);
-    //this.velocity.y = Math.max(0, this.velocity.y + this.accel.y);
     this.velocity.x += this.accel.x;
     this.velocity.y += this.accel.y;
     this.velocity.z += this.accel.z;
   }
   isDead(){
-    return this.particle.position.z > 1000
+    var ret = false;
+    if(this.particle.position.z < -1000){
+      scene.remove(this.particle);
+      this.partGeom.dispose();
+      this.partMaterial.dispose();
+      renderer.renderLists.dispose();
+      ret = true;
+    }return ret;
   }
 }
