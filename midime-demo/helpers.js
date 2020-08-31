@@ -56,7 +56,6 @@ function splitSequence(ns) {
   return seqs;
 }
 
-
 function extractForInstrument(ns, instrument) {
   const out = mm.NoteSequence.create(ns);
   out.notes = [];
