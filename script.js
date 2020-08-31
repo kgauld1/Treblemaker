@@ -8,129 +8,111 @@ player.autostart = false;
 let key_dict = {
   'Q':{
     keyClass: 0,
-    filename: 'drums/clap1.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("A3", "triangle").toDestination()
+    filename: 'audio_files/drums/clap1.wav'
   },
   'W': {
     keyClass: 0,
-    filename: 'drums/clap2.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("B3", "triangle").toDestination()
+    filename: 'audio_files/drums/clap2.wav'
   },
   'E':{
     keyClass: 0,
-    filename: 'drums/perc1.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("C4", "triangle").toDestination()
+    filename: 'audio_files/drums/perc1.wav'
   },
   'R':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("D4", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'T':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("E4", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'Y':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("F4", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'U': {
     keyClass: 1,
-    osc : new Tone.OmniOscillator("G4", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   }, 
   'I': {
-    keyClass: 2,
-    osc : new Tone.OmniOscillator("A4", "triangle").toDestination()
+    keyClass: 1,
+    filename: 'audio_files/melody/'
   },
   'O':{
     keyClass: 2,
-    osc : new Tone.OmniOscillator("B4", "triangle").toDestination()
+    filename: 'audio_files/bass/bass1.wav'
   },
   'P':{
     keyClass: 2,
-    osc : new Tone.OmniOscillator("C5", "triangle").toDestination()
+    filename: 'audio_files/bass/bass2.wav'
   },
   'A':{
     keyClass: 0,
-    filename: 'drums/hihat1.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("D5", "triangle").toDestination()
+    filename: 'audio_files/drums/hihat1.wav'
   },
   'S':{
     keyClass: 0,
-    filename: 'drums/hihat2.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("E5", "triangle").toDestination()
+    filename: 'audio_files/drums/hihat2.wav'
   },
   'D': {
     keyClass: 0,
-    filename: 'drums/kick1.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("F5", "triangle").toDestination()
+    filename: 'audio_files/drums/kick1.wav'
   }, 
   'F': {
     keyClass: 1,
-    osc : new Tone.OmniOscillator("G5", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'G':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("A5", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'H':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("B5", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'J':{
-    keyClass: 2,
-    osc : new Tone.OmniOscillator("C6", "triangle").toDestination()
+    keyClass: 1,
+    filename: 'audio_files/melody/'
   },
   'K':{
     keyClass: 2,
-    osc : new Tone.OmniOscillator("D6", "triangle").toDestination()
+    filename: 'audio_files/bass/bass3.wav'
   },
   'L': {
     keyClass: 2,
-    osc : new Tone.OmniOscillator("E6", "triangle").toDestination()
+    filename: 'audio_files/bass/bass4.wav'
   }, 
   'Z': {
     keyClass: 0,
-    filename: 'drums/snare1.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("F6", "triangle").toDestination()
+    filename: 'audio_files/drums/snare1.wav'
   },
   'X':{
     keyClass: 0,
-    filename: 'drums/snare2.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("G6", "triangle").toDestination()
+    filename: 'audio_files/drums/snare2.wav'
   },
   'C':{
     keyClass: 0,
-    filename: 'drums/snare3.wav',
-    player: undefined
-    //osc : new Tone.OmniOscillator("A6", "triangle").toDestination()
+    filename: 'audio_files/drums/snare3.wav'
   },
   'V':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("B6", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'B':{
     keyClass: 1,
-    osc : new Tone.OmniOscillator("C7", "triangle").toDestination()
+    filename: 'audio_files/melody/'
   },
   'N': {
     keyClass: 2,
-    osc : new Tone.OmniOscillator("D7", "triangle").toDestination()
+    filename: 'audio_files/bass/bass5.wav'
   }, 
   'M': {
     keyClass: 2,
-    osc : new Tone.OmniOscillator("E7", "triangle").toDestination()
+    filename: 'audio_files/bass/bass6.wav'
   }
 }
 let audio_started = false;
-
+let analyzer = new Tone.FFT(2048);
 
 
 const canvas = document.querySelector('#canvas');
@@ -182,7 +164,6 @@ shadowLight.shadow.mapSize.height = 4096;
 
 scene.add(hemisphereLight);  
 scene.add(shadowLight);
-
 
 
 /*     CREATE BUBBLES     */
@@ -289,23 +270,31 @@ window.addEventListener('keydown', e => {
   }
   var chr = String.fromCharCode(e.keyCode);
   if(key_dict[chr] == undefined) return;
-  if(key_dict[chr].keyClass == 0){
-    if(key_dict[chr].player == undefined){
-      key_dict[chr].player = new Tone.Player(key_dict[chr].filename).toDestination();
-      key_dict[chr].player.loop = true;
-      key_dict[chr].player.autostart = true;
-    }else key_dict[chr].player.start();
+  if(key_dict[chr].keyClass == 1) return;
+  
+  if(key_dict[chr].player == undefined){
+    key_dict[chr].player = new Tone.Player(key_dict[chr].filename).toDestination();
+    key_dict[chr].player.loop = false;
+    key_dict[chr].player.autostart = true;
+    key_dict[chr].player.connect(analyzer);
   }else
-    key_dict[chr].osc.start();
+    key_dict[chr].player.start();
+    
 });
 window.addEventListener('keyup', e => {
   var chr = String.fromCharCode(e.keyCode)
   if(key_dict[chr] == undefined) return;
-  if(key_dict[chr].keyClass == 0){
-    if(key_dict[chr].player != undefined)
-      key_dict[chr].player.stop();
-  }else
-    key_dict[chr].osc.stop();
+
+  switch(key_dict[chr].keyClass){
+    case 1:
+      //key_dict[chr].osc.stop();
+      break;
+    case 2:
+      if(key_dict[chr].player != undefined)
+        key_dict[chr].player.stop();
+    default:
+      return;
+  }
 });
 
 
@@ -316,7 +305,7 @@ const render = (time) => {
     bubble.rotation.z += Math.random() / rot_factor
   }
 
-  updateVertices(time)
+  updateVertices(time)//  
 
   for(let m of movements){
     if (m.dist > 0.1) m.accel -= 0.05;
