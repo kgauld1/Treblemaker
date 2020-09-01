@@ -221,10 +221,29 @@ const aiPlayer = new Tone.Sampler({
 }).toDestination();
 aiPlayer.connect(analyzer);
 
+let aiDrumsLoaded = false;
+const drumPlayer = new Tone.Sampler({
+  urls:{
+    'C1': 'clap1.wav',
+    'C#1': 'clap2.wav',
+    'D1': 'hihat1.wav',
+    'D#1': 'hihat2.wav',
+    'E1': 'kick1.wavwav',
+    'F1': 'perc1.wav',
+    'F#1': 'snare1.wav',
+    'G1': 'snare2.wav'
+  },
+  baseUrl: "audio_files/drums/",
+  onload: () => {
+    aiDrumsLoaded = true;
+  }
+}).toDestination();
+drumPlayer.connect(analyzer);
 /*
 if(aiPlayerLoaded)
   aiPlayer.triggerAttackRelease(notes: ['A3', 'A4', 'A5'], '4n')
 */
+
 
 
 const canvas = document.querySelector('#canvas');
@@ -232,12 +251,19 @@ let width = canvas.offsetWidth;
 let height = canvas.offsetHeight;
 const renderer = new THREE.WebGLRenderer({canvas: canvas});
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xfaf0e6, 100, 1000);
-scene.background = new THREE.Color(0xfaf0e6);
+scene.fog = new THREE.Fog(0x000000, 100, 1000);
+//scene.background = new THREE.Color(0xfaf0e6);
+
+// const loader = new THREE.TextureLoader();
+// loader.load('images/introbg.png' , function(texture)
+//             {
+//              scene.background = texture;  
+//             });
 
 const setup = () => {
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize(width, height);
+  renderer.setClearColor(0x000000, 0);
   renderer.shadowMap.enabled = true;
   renderer.shadowMapSoft = true;
 
@@ -531,12 +557,14 @@ window.addEventListener('click', async e => {
   let drumResult = await drumRnn.continueSequence(drumSeed, steps, temperature);
 
 	for (let note of melodyResult.notes){
-		console.log('trigger', note.pitch, note.quantizedStartStep);
-		aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+		//console.log('trigger', note.pitch, note.quantizedStartStep);
+    if(aiPlayerLoaded)
+		  aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
 	}
 
 	for (let note of drumResult.notes){
-		aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+		if(aiDrumsLoaded)
+      drumPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
 	}
 })
 
