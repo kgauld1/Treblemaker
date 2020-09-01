@@ -228,7 +228,7 @@ const drumPlayer = new Tone.Sampler({
     'C#1': 'clap2.wav',
     'D1': 'hihat1.wav',
     'D#1': 'hihat2.wav',
-    'E1': 'kick1.wavwav',
+    'E1': 'kick1.wav',
     'F1': 'perc1.wav',
     'F#1': 'snare1.wav',
     'G1': 'snare2.wav'
@@ -245,20 +245,55 @@ if(aiPlayerLoaded)
 */
 
 
-
 const canvas = document.querySelector('#canvas');
+
+var button =  document.createElement('button');
+button.setAttribute('class', 'button');
+button.appendChild(document.createTextNode("Click here to start the AI"));
+document.body.appendChild(button);
+
+button.onclick = async () => {
+  await melodyRnnLoaded;
+  let melodySeed = {
+    notes: notesMidi,
+    totalQuantizedSteps: notesMidi[notesMidi.length - 1].quantizedEndStep,
+    quantizationInfo: { stepsPerQuarter: 4 }
+  };
+  let steps = 128;
+  let temperature = 0.8;
+
+  
+  await drumRnnLoaded;
+  let drumSeed = {
+    notes: drumsMidi,
+    totalQuantizedSteps: drumsMidi[drumsMidi.length - 1].quantizedEndStep,
+    quantizationInfo: {stepsPerQuarter: 4}
+  }
+
+  let melodyResult = await melodyRnn.continueSequence(melodySeed, steps, temperature);
+
+  let drumResult = await drumRnn.continueSequence(drumSeed, steps, temperature);
+
+	for (let note of melodyResult.notes){
+		//console.log('trigger', note.pitch, note.quantizedStartStep);
+    if(aiPlayerLoaded)
+		  aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+	}
+
+	for (let note of drumResult.notes){
+		if(aiDrumsLoaded)
+      drumPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+	}
+}
+
+
 let width = canvas.offsetWidth;
 let height = canvas.offsetHeight;
-const renderer = new THREE.WebGLRenderer({canvas: canvas});
+const renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true});
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x000000, 100, 1000);
+//scene.fog = new THREE.Fog(0xfaf0e60, 100, 1000);
+scene.fog = new THREE.Fog(0xb4ccdc, 100, 1000);
 //scene.background = new THREE.Color(0xfaf0e6);
-
-// const loader = new THREE.TextureLoader();
-// loader.load('images/introbg.png' , function(texture)
-//             {
-//              scene.background = texture;  
-//             });
 
 const setup = () => {
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -534,44 +569,6 @@ let drumToMidi = new Map([...midiToDrum].map((e) => e.reverse()));
 let drumRnnLoaded = drumRnn.initialize();
 let melodyRnnLoaded = melodyRnn.initialize();
 
-window.addEventListener('click', async e => {
-  await melodyRnnLoaded;
-  let melodySeed = {
-    notes: notesMidi,
-    totalQuantizedSteps: notesMidi[notesMidi.length - 1].quantizedEndStep,
-    quantizationInfo: { stepsPerQuarter: 4 }
-  };
-  let steps = 128;
-  let temperature = 0.8;
-
-  
-  await drumRnnLoaded;
-  let drumSeed = {
-    notes: drumsMidi,
-    totalQuantizedSteps: drumsMidi[drumsMidi.length - 1].quantizedEndStep,
-    quantizationInfo: {stepsPerQuarter: 4}
-  }
-
-  let melodyResult = await melodyRnn.continueSequence(melodySeed, steps, temperature);
-
-  let drumResult = await drumRnn.continueSequence(drumSeed, steps, temperature);
-
-	for (let note of melodyResult.notes){
-		//console.log('trigger', note.pitch, note.quantizedStartStep);
-    if(aiPlayerLoaded)
-		  aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
-	}
-
-	for (let note of drumResult.notes){
-		if(aiDrumsLoaded)
-      drumPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
-	}
-})
-
-async function playDelayedNote(note, delay){
-
-}
-
 
 //////// PARTICLES /////////
 class ParticleSystem{
@@ -591,8 +588,19 @@ class ParticleSystem{
   }
   isDead(){
     for(let p of this.particles)
-      if(p.isDead()){return true;}
+      if(p.isDead()){
+        this.destroyParticles();
+        return true;
+      }
     return false;
+  }
+  destroyParticles(){
+    for(let particle of this.particles){
+      scene.remove(particle);
+      particle.partGeom.dispose();
+      particle.partMaterial.dispose();
+      renderer.renderLists.dispose();
+    }
   }
 }
 class Particle{
@@ -619,13 +627,6 @@ class Particle{
     this.velocity.z += this.accel.z;
   }
   isDead(){
-    var ret = false;
-    if(this.particle.position.z < -1000){
-      scene.remove(this.particle);
-      this.partGeom.dispose();
-      this.partMaterial.dispose();
-      renderer.renderLists.dispose();
-      ret = true;
-    }return ret;
+    return this.particle.position.z < -1000;
   }
 }

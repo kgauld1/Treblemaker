@@ -1,0 +1,31 @@
+body{
+	background-image: url("https://cdn.discordapp.com/attachments/739709584234512574/750202416477241414/introbg3.png");
+  background-repeat: no-repeat;
+  background-attachment: fixed;  
+  background-size: cover;
+	font-family: 'Quicksand', sans-serif;
+	margin: 5%;
+}
+
+.textintro p{
+	font-size: 2em;
+	width: 70%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.button {
+  border: none;
+  border-radius: 10px;
+  color:white;
+	background-image: linear-gradient(to right, #2BC0E4 0%, #990099 90%);
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+	font-family: 'Quicksand', sans-serif;
+  font-size: 30px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+}

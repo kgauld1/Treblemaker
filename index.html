@@ -5,12 +5,31 @@
     <meta name="viewport" content="width=device-width">
     <title>Treblemaker</title>
     <link rel='icon' href="/icon.png">
+		<link rel="stylesheet" href="style.css">
 		<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- p5.js -->
 		<script src="libs/p5.js"></script>
   </head>
-  <body>
-    <script src="intro.js"></script>
+  <body scroll = "no" stle="overflow: hidden">
+		<center> 
+			<div class="textintro">
+				<p>
+					Welcome to Treblemaker - an immersive visual and auditory experience that combines interactive music creation with mesmerizing 3D graphics! Press any letter key from A -> Z to use the keyboard as a multi-instrumental toolbox and start creating unique melodies with only the touch of a finger!
+				</p>
+			</div>
+
+			<form action="/visualization.html" method="get" >
+        <button class="button" type="submit">Start</button>
+      </form>
+			
+			<div class="intro pic">
+				<img src="/images/intropic.png" alt="Typing Picture" style="width: 50%;">
+			</div>
+
+		</center> 
+
+		
+    <!-- <script src="intro.js"></script> -->
   </body>
 </html>
