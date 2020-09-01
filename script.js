@@ -1,4 +1,5 @@
-var midi = [];
+var notesMidi = [];
+var drumsMidi = [];
 let loaded = {}
 let startTime = Date.now();
 let audio_started = false;
@@ -195,6 +196,37 @@ for (let i = 0; i < 26; i++){
   key_dict[letter].player.connect(analyzer);
 }
 
+// playerMelody = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus');
+
+let aiPlayerLoaded = false
+const aiPlayer = new Tone.Sampler({
+	urls: {
+		"A3": "a.wav",
+		"A#3": "as.wav",
+    "B3": "b.wav",
+		"C3": "c.wav",
+    "C#3": "cs.wav",
+		"D3": "d.wav",
+    "D#3": "ds.wav",
+		"E3": "e.wav",
+    "F3": "f.wav",
+		"F#3": "fs.wav",
+    "G3": "g.wav",
+		"G#3": "gs.wav",
+	},
+	baseUrl: "audio_files/melody/",
+	onload: () => {
+		aiPlayerLoaded = true;
+	}
+}).toDestination();
+aiPlayer.connect(analyzer);
+
+/*
+if(aiPlayerLoaded)
+  aiPlayer.triggerAttackRelease(notes: ['A3', 'A4', 'A5'], '4n')
+*/
+
+
 const canvas = document.querySelector('#canvas');
 let width = canvas.offsetWidth;
 let height = canvas.offsetHeight;
@@ -369,30 +401,45 @@ window.addEventListener('keydown', e => {
   }
 });
 
-function getNote(chr){
-		let midiNotes = [];
-		
-		for (i in key_dict[chr].midiNote.note) midiNotes.push(i);
-		let midiNote = Tone.Frequency(key_dict[chr].midiNote.note[0]).toMidi();
-		let tempo = 120; // quarter/second
-		let quantizedTempo = tempo*4; // 16ths / second
+function addNote(chr, st){
+	let tempo = 120; // quarter/min
+	let quantizedTempo = (tempo*4)/60; // 16ths / second
 
-		let sTime = Math.round(((keys[e.keyCode] - startTime) * 1000) * quantizedTempo);
-		let eTime = Math.round(((keys[e.keyCode] - Date.now()) * 1000) * quantizedTempo);
-		midi.push({
-			pitch: chr,
+	let sTime = Math.round(((st - startTime) / 1000) * quantizedTempo);
+	let eTime = Math.round(((Date.now() - startTime) / 1000) * quantizedTempo);
+
+	for (note of key_dict[chr].midiNote.note){
+		if (key_dict[chr].midiNote.style == 'drums'){
+			// let n = note.substring(0, note.length - 1) + parseInt(note.charAt(note.length - 1))
+			let midiNote = drumToMidi.get(note);
+			drumsMidi.push({
+				pitch: midiNote + 12,
+				quantizedStartStep: sTime,
+				quantizedEndStep: eTime
+			});
+			console.log(midiNote + 12, sTime, eTime);
+			continue;
+		}
+		let midiNote = Tone.Frequency(note).toMidi();
+		
+		notesMidi.push({
+			pitch: midiNote + 12,
 			quantizedStartStep: sTime,
-			quantizedEndStep: eTime		
+			quantizedEndStep: eTime
 		})
+		console.log(midiNote + 12, sTime, eTime);
+	}
 }
 
 window.addEventListener('keyup', e => {
 	var chr = String.fromCharCode(e.keyCode);
+	let st = keys[e.keyCode];
 	delete keys[e.keyCode];
   if(key_dict[chr] == undefined) return;
   if(key_dict[chr].keyCode == 0) return;
   if(loaded[chr]){
     key_dict[chr].player.stop();
+		addNote(chr, st);
 	}
 });
 
@@ -439,36 +486,70 @@ function map(v,l1,h1,l2,h2){
   return ratio*r2 + l2;
 }
 
-
-
 ////// MAGENTA //////
 
 let melodyRnn = new music_rnn.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/basic_rnn');
+
+let drumRnn = new music_rnn.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/drum_kit_rnn')
+
+let midiToDrum = new Map([
+  [36, 'clap1'],
+  [37, 'clap2'],
+  [38, 'hihat1'],
+  [39, 'hihat2'],
+  [40, 'kick1'],
+  [41, 'perc1'],
+  [42, 'snare1'],
+  [43, 'snare2']
+])
+
+let drumToMidi = new Map([...midiToDrum].map((e) => e.reverse()));
+
+let drumRnnLoaded = drumRnn.initialize();
 let melodyRnnLoaded = melodyRnn.initialize();
 
 window.addEventListener('click', async e => {
   await melodyRnnLoaded;
-  let seed = {
-    notes: [
-      {pitch: Tone.Frequency('C4').toMidi(), quantizedStartStep: 0, quantizedEndStep: 4},
-      {pitch: 'D4', quantizedStartStep: 4, quantizedEndStep: 8}
-    ],
-    totalQuantizedSteps: 8,
+  let melodySeed = {
+    notes: notesMidi,
+    totalQuantizedSteps: notesMidi[notesMidi.length - 1].quantizedEndStep,
     quantizationInfo: { stepsPerQuarter: 4 }
   };
-  let steps = 32;
+  let steps = 128;
   let temperature = 0.8;
 
-  let result = await melodyRnn.continueSequence(seed, steps, temperature);
+  
+  await drumRnnLoaded;
+  let drumSeed = {
+    notes: drumsMidi,
+    totalQuantizedSteps: drumsMidi[drumsMidi.length - 1].quantizedEndStep,
+    quantizationInfo: {stepsPerQuarter: 4}
+  }
+
+  let melodyResult = await melodyRnn.continueSequence(melodySeed, steps, temperature);
+
+  let drumResult = await drumRnn.continueSequence(drumSeed, steps, temperature);
+
+	for (let note of melodyResult.notes){
+		console.log('trigger', note.pitch, note.quantizedStartStep);
+		aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+	}
+
+	for (let note of drumResult.notes){
+		aiPlayer.triggerAttackRelease(note.pitch, note.quantizedEndStep - note.quantizedStartStep, note.quantizedStartStep);
+	}
 })
 
+async function playDelayedNote(note, delay){
+
+}
 
 
 //////// PARTICLES /////////
 class ParticleSystem{
   constructor(origin, size, color){
     let p = [];
-    let n = 24
+    let n = 8
     for(let i = 0; i < n; i++)
       p.push(new Particle(origin, size, 2*i*Math.PI/n, color));
     this.particles = p;

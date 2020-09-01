@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Treblemaker</title>
+    <link rel='icon' href="/icon.png">
+		<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+      }
+      .scene {
+        position: absolute;
+        width: 100%;
+        height: 100vh;
+      }
+    </style>
+    
+    <!-- Import tone.js -->
+    <script src="https://unpkg.com/tone"></script>
+    <!-- three.js -->
+		<script src="libs/three.js"></script>
+    <!-- perlin noise functionality -->
+    <script src="libs/perlin.js"></script>
+    <!-- Core library for magenta.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.0.0/es6/core.js"></script>  
+		<!-- Import tensorflow.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/1.2.8/tf.min.js"></script>
+    <!--Magenta Music RNN model-->
+    <script src="https://cdn.jsdelivr.net/npm/@magenta/music@^1.20.0/es6/music_rnn.js"></script>
+  </head>
+  <body>
+    <canvas class="scene" id="canvas"></canvas>
+    <script src="script.js"></script>
+  </body>
+</html>
